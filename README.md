@@ -62,7 +62,6 @@ streamlit run ai_data_visualisation_agent.py
 4. View generated visualizations
 5. Inspect auto-generated code in expandable section
 
-![App Screenshot](https://via.placeholder.com/800x500.png?text=AI+Data+Viz+Interface)
 
 ## Deployment ☁️
 Deployed on Streamlit Cloud using:
