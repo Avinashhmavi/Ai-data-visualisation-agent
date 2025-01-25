@@ -1,12 +1,11 @@
-# Ai-data-visualisation-agent
-Here's a comprehensive `README.md` for your deployed AI Data Visualization Agent:
+### AI Data Visualization Agent 🤖📊
 
-```markdown
-# AI Data Visualization Agent 🤖📊
+An intelligent data analysis tool that leverages AI models to automatically generate visualizations and insights from uploaded CSV data.
 
 [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://ai-data-visualisation-agent.streamlit.app/)
 
-An intelligent data analysis tool that leverages AI models to automatically generate visualizations and insights from uploaded CSV data.
+
+```markdown
 
 ## Features ✨
 - Supports multiple AI models (Llama3-70B, Mixtral-8x7B, Gemma-7B)
@@ -86,4 +85,3 @@ python-dotenv==1.0.1
 
 **Need Help?**  
 Contact: avi.hm24@gmail.com
-```
