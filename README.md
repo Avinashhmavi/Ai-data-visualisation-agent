@@ -6,7 +6,6 @@ An intelligent data analysis tool that leverages AI models to automatically gene
 
 **Live App:** [https://ai-data-visualisation-agent.streamlit.app/](https://ai-data-visualisation-agent.streamlit.app/)
 
-```markdown
 
 ## Features ✨
 - Supports multiple AI models (Llama3-70B, Mixtral-8x7B, Gemma-7B)
@@ -42,7 +41,7 @@ GROQ_API_KEY=your_api_key_here
 
 4. **Run Locally**
 ```bash
-streamlit run app.py
+streamlit run ai_data_visualisation_agent.py
 ```
 
 ## Configuration ⚙️
