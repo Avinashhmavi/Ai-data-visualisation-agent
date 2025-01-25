@@ -2,13 +2,10 @@
 
 An intelligent data analysis tool that leverages AI models to automatically generate visualizations and insights from uploaded CSV data.
 
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://ai-data-visualisation-agent.streamlit.app/)
-
 [![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://ai-data-visualisation-agent.streamlit.app/)
 
 **Live App:** [https://ai-data-visualisation-agent.streamlit.app/](https://ai-data-visualisation-agent.streamlit.app/)
 
-An intelligent data analysis tool that leverages AI models to automatically generate visualizations and insights from uploaded CSV data.
 ```markdown
 
 ## Features ✨
