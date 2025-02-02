@@ -430,16 +430,31 @@ def parse_query(query: str, df: pd.DataFrame):
     x_column = None
     y_column = None
     column = None
-    
+
+    # Normalize chart names and map synonyms
+    CHART_SYNONYMS = {
+        "bar chart": ["bar chart", "bar graph", "barplot"],
+        "line chart": ["line chart", "line graph", "lineplot"],
+        "scatter plot": ["scatter plot", "scatter chart", "scatter graph"],
+        "pie chart": ["pie chart", "pie graph", "pieplot"],
+        "histogram": ["histogram", "distribution plot"],
+        "box plot": ["box plot", "box chart", "boxplot"],
+        "heatmap": ["heatmap", "correlation matrix"],
+        "donut chart": ["donut chart", "donut plot"],
+        "stacked bar chart": ["stacked bar chart", "stacked bar graph"],
+        "grouped bar chart": ["grouped bar chart", "grouped bar graph"],
+        # Add more synonyms as needed...
+    }
+
     # Identify chart type
-    for chart in CHART_TEMPLATES.keys():
-        if chart.lower() in query_lower:
+    for chart, synonyms in CHART_SYNONYMS.items():
+        if any(synonym in query_lower for synonym in synonyms):
             chart_type = chart
             break
-    
+
     if not chart_type:
         raise ValueError("Chart type not recognized in query.")
-    
+
     # Identify relevant columns
     for col in df.columns:
         if col.lower() in query_lower:
@@ -449,13 +464,22 @@ def parse_query(query: str, df: pd.DataFrame):
                 y_column = col
             else:
                 break
-    
+
     # Fallback: Use first two numeric columns if no match
     if not x_column or not y_column:
         numeric_cols = [col for col in df.columns if pd.api.types.is_numeric_dtype(df[col])]
-        x_column = numeric_cols[0] if len(numeric_cols) > 0 else None
-        y_column = numeric_cols[1] if len(numeric_cols) > 1 else None
-    
+        categorical_cols = [col for col in df.columns if pd.api.types.is_categorical_dtype(df[col]) or pd.api.types.is_object_dtype(df[col])]
+
+        if chart_type in ["bar chart", "pie chart", "donut chart"]:
+            x_column = categorical_cols[0] if len(categorical_cols) > 0 else None
+            y_column = numeric_cols[0] if len(numeric_cols) > 0 else None
+        elif chart_type in ["scatter plot", "line chart", "box plot"]:
+            x_column = numeric_cols[0] if len(numeric_cols) > 0 else None
+            y_column = numeric_cols[1] if len(numeric_cols) > 1 else None
+        else:
+            x_column = numeric_cols[0] if len(numeric_cols) > 0 else None
+            y_column = numeric_cols[1] if len(numeric_cols) > 1 else None
+
     return chart_type, x_column, y_column
 
 
