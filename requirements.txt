@@ -4,5 +4,4 @@ matplotlib
 seaborn
 plotly
 groq
-re
 sys
