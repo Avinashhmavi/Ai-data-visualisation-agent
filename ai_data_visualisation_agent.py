@@ -90,7 +90,7 @@ If a chart is required, use Plotly or Matplotlib.
     max_tokens=1500
 )
 
-return response.choices[0].message.content
+return response.choices[0].message.content"""
 def display_results(env, output):
 “”“Handle multiple visualization types”””
 # Matplotlib figures
