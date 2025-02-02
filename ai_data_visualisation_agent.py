@@ -53,6 +53,7 @@ def safe_execute_code(code: str, df: pd.DataFrame):
     for keyword in forbidden:
         if keyword in code:
             raise ValueError(f"Forbidden operation detected: {keyword}")
+
     # Create execution environment
     env = {
         'pd': pd,
@@ -78,9 +79,13 @@ def generate_analysis_code(df: pd.DataFrame, query: str, model: str):
     system_prompt = f"""Analyze DataFrame with columns: {list(df.columns)}
 {CHART_GUIDE}
 Respond **ONLY** with a Python script inside:
+
 # Your Python code here
+
 If a chart is required, use Plotly or Matplotlib.
-“””response = client.chat.completions.create(
+“””
+
+response = client.chat.completions.create(
     messages=[
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": f"Generate Python code for: {query}. Only return the code inside triple backticks."}
@@ -90,7 +95,8 @@ If a chart is required, use Plotly or Matplotlib.
     max_tokens=1500
 )
 
-return response.choices[0].message.content"""
+return response.choices[0].message.content
+
 def display_results(env, output):
 “”“Handle multiple visualization types”””
 # Matplotlib figures
@@ -98,6 +104,7 @@ figures = [plt.figure(i) for i in plt.get_fignums()]
 for fig in figures:
 st.pyplot(fig)
 plt.close(‘all’)
+
 # Plotly figures from environment
 for var in env:
     if isinstance(env[var], (plt.Figure, px._figure.Figure)):
@@ -105,153 +112,86 @@ for var in env:
             st.plotly_chart(env[var])
         else:
             st.pyplot(env[var])
-**Critical Rules**
-1. Use EXISTING 'df' - never load data
-2. Prefer Plotly Express (px) for advanced charts
-3. For Matplotlib: call plt.show() after each plot
-4. Handle errors gracefully with try/except
-5. Preprocess data as needed (datetime conversion, normalization)
-
-**Code Examples**
-1. Line Chart:
-plt.figure(figsize=(10,4))
-plt.plot(df['date'], df['value'])
-plt.title('Trend Analysis')
-plt.show()
-
-2. Interactive Plotly:
-fig = px.scatter(df, x='x_col', y='y_col', color='category')
-fig.show()
-
-3. Statistical Plot:
-sns.violinplot(x='group', y='value', data=df)
-plt.show()
-
-4. Geospatial:
-fig = px.choropleth(df, locations='iso_code', color='value')
-fig.show()
-
-5. Composition:
-df.groupby('category').size().plot.pie(autopct='%1.1f%%')
-plt.show()
-
-**Response Strategy**
-1. Analyze user query intent
-2. Select appropriate chart types
-3. Verify data requirements
-4. Generate clean visualization code
-5. Include necessary preprocessing"""
-
-    response = client.chat.completions.create(
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": query}
-        ],
-        model=model,
-        temperature=0.3,
-        max_tokens=2500
-    )
-    
-    return response.choices[0].message.content
-
-def display_results(env, output):
-    """Handle multiple visualization types"""
-    # Matplotlib figures
-    figures = [plt.figure(i) for i in plt.get_fignums()]
-    for fig in figures:
-        st.pyplot(fig)
-    plt.close('all')
-    
-    # Plotly figures from environment
-    import plotly.graph_objects as go  # Import this at the top
-
-    for var in env:
-      if isinstance(env[var], (plt.Figure, go.Figure)):  # Use go.Figure instead
-        if isinstance(env[var], go.Figure):  # Check for Plotly figures
-            st.plotly_chart(env[var])
-        else:
-            st.pyplot(env[var])
 
 def main():
-    st.title("📊 Smart Chart Generator")
-    
-    # Model selection
-    selected_model = st.sidebar.selectbox("Choose AI Model", list(MODELS.keys()), index=0)
-    
-    # File upload and processing
-    uploaded_file = st.sidebar.file_uploader("Upload CSV", type="csv")
-    df = None
-    
-    if uploaded_file:
+st.title(“📊 Smart Chart Generator”)
+
+# Model selection
+selected_model = st.sidebar.selectbox("Choose AI Model", list(MODELS.keys()), index=0)
+
+# File upload and processing
+uploaded_file = st.sidebar.file_uploader("Upload CSV", type="csv")
+df = None
+
+if uploaded_file:
+    try:
+        df = pd.read_csv(uploaded_file)
+        st.sidebar.subheader("Data Summary")
+        st.sidebar.write(f"Rows: {df.shape[0]}, Columns: {df.shape[1]}")
+        st.sidebar.write("Columns:", df.columns.tolist())
+        
+    except Exception as e:
+        st.error(f"Error reading CSV: {str(e)}")
+        return
+
+# Analysis request
+query = st.text_area("Analysis Request", 
+                   "Generate appropriate visualizations to show key insights",
+                   height=100)
+
+if st.button("Generate Visualizations") and df is not None:
+    with st.spinner("Creating analysis..."):
         try:
-            df = pd.read_csv(uploaded_file)
-            st.sidebar.subheader("Data Summary")
-            st.sidebar.write(f"Rows: {df.shape[0]}, Columns: {df.shape[1]}")
-            st.sidebar.write("Columns:", df.columns.tolist())
+            # Generate analysis code
+            code_response = generate_analysis_code(df, query, MODELS[selected_model])
             
+            # Extract code block
+            clean_code = extract_code(code_response)
+            if not clean_code:
+                st.error("No valid code block found in response")
+                return
+            
+            # Display generated code
+            with st.expander("Generated Analysis Code"):
+                st.code(clean_code)
+            
+            # Execute code with safety features
+            output, env = safe_execute_code(clean_code, df)
+            
+            # Display results
+            st.subheader("Visualization Results")
+            display_results(env, output)
+            
+            if output.strip():
+                st.subheader("Execution Logs")
+                st.text(output)
+                
         except Exception as e:
-            st.error(f"Error reading CSV: {str(e)}")
-            return
+            st.error(f"Analysis failed: {str(e)}")
+            st.info("Common fixes: Check data types, column names, and sample data")
 
-    # Analysis request
-    query = st.text_area("Analysis Request", 
-                       "Generate appropriate visualizations to show key insights",
-                       height=100)
+if name == “main”:
+main()
 
-    if st.button("Generate Visualizations") and df is not None:
-        with st.spinner("Creating analysis..."):
-            try:
-                # Generate analysis code
-                code_response = generate_analysis_code(df, query, MODELS[selected_model])
-                
-                # Extract code block
-                code_match = re.search(r'```python(.*?)```', code_response, re.DOTALL)
-                if not code_match:
-                    st.error("No valid code block found in response")
-                    return
-                
-                clean_code = code_match.group(1).strip()
-                
-                # Display generated code
-                with st.expander("Generated Analysis Code"):
-                    st.code(clean_code)
-                
-                # Execute code with safety features
-                output, env = safe_execute_code(clean_code, df)
-                
-                # Display results
-                st.subheader("Visualization Results")
-                display_results(env, output)
-                
-                if output.strip():
-                    st.subheader("Execution Logs")
-                    st.text(output)
-                    
-            except Exception as e:
-                st.error(f"Analysis failed: {str(e)}")
-                st.info("Common fixes: Check data types, column names, and sample data")
+### Steps to Use:
 
-if __name__ == "__main__":
-    main()
-    ### Key Changes:
-1. **`extract_code()` Function:** This method now handles both responses with triple backticks and responses that have direct code snippets without formatting.
-   
-2. **Updated `system_prompt`:** The prompt instructs the AI to return **only Python code** inside triple backticks.
+1. **Install Required Libraries:**
+   - If you haven't installed the libraries required by this script yet, run:
+     ```
+     pip install streamlit pandas matplotlib seaborn plotly groq
+     ```
 
-3. **Limit on `max_tokens`:** Reduced to `1500` to avoid overly long responses or truncation.
+2. **Run Streamlit:**
+   - Save this script as a Python file (e.g., `app.py`).
+   - Run the Streamlit app:
+     ```
+     streamlit run app.py
+     ```
 
-4. **Security in Code Execution:** The `safe_execute_code()` method includes checks to prevent unsafe operations in the AI-generated code.
+3. **Upload CSV and Query:**
+   - Upload a CSV file in the sidebar and provide a query in the text area.
+   - Click "Generate Visualizations" to see the visualizations generated by the AI.
 
-### How it Works:
-1. **User Uploads a CSV File:** The user uploads a CSV file, which is processed into a `DataFrame`.
-2. **User Request for Visualization:** The user types a query asking the AI to generate a specific visualization.
-3. **Groq API Generates Python Code:** The system sends the request to the Groq API, and the AI responds with Python code for data analysis and visualization.
-4. **Execute and Display the Result:** The Python code is executed safely, and any resulting visualizations (Plotly or Matplotlib) are displayed in the Streamlit app.
+---
 
-### Troubleshooting:
-- Ensure that the API key (`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`) is correct and valid.
-- If the output is empty or the AI response is not useful, try refining the query or checking data types and columns in the CSV file.
-
-This version should handle the "No valid code block found in response" issue while also improving safety and flexibility in executing AI-generated Python code.
-
-Let me know if you need further adjustments!
+This code should now work as intended with a more robust method for extracting Python code and a safer execution environment for generating and displaying the visualizations. Let me know if you need any further tweaks!
