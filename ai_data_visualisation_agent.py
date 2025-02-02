@@ -126,12 +126,14 @@ def display_results(env, output):
     plt.close('all')
     
     # Plotly figures from environment
+    import plotly.graph_objects as go  # Import this at the top
+
     for var in env:
-        if isinstance(env[var], (plt.Figure, px._figure.Figure)):
-            if 'plotly' in str(type(env[var])):
-                st.plotly_chart(env[var])
-            else:
-                st.pyplot(env[var])
+      if isinstance(env[var], (plt.Figure, go.Figure)):  # Use go.Figure instead
+        if isinstance(env[var], go.Figure):  # Check for Plotly figures
+            st.plotly_chart(env[var])
+        else:
+            st.pyplot(env[var])
 
 def main():
     st.title("📊 Smart Chart Generator")
