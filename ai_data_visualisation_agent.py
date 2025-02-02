@@ -35,6 +35,17 @@ Always:
 - Include legends where needed
 """
 
+def extract_code(response_text):
+    """Extracts Python code from AI response more robustly"""
+    # Try finding code inside triple backticks
+    match = re.search(r'```python(.*?)```', response_text, re.DOTALL)
+    if match:
+        return match.group(1).strip()
+
+    # If no backticks, try extracting after a phrase
+    match = re.search(r'(Here is the Python code:|Code:|Python code:)\s*(.*)', response_text, re.DOTALL)
+    return match.group(2).strip() if match else None
+
 def safe_execute_code(code: str, df: pd.DataFrame):
     """Execute code safely with enhanced validation and Plotly support"""
     # Security checks
@@ -42,7 +53,6 @@ def safe_execute_code(code: str, df: pd.DataFrame):
     for keyword in forbidden:
         if keyword in code:
             raise ValueError(f"Forbidden operation detected: {keyword}")
-
     # Create execution environment
     env = {
         'pd': pd,
