@@ -77,7 +77,34 @@ def generate_analysis_code(df: pd.DataFrame, query: str, model: str):
     """Generate analysis code with chart-specific instructions"""
     system_prompt = f"""Analyze DataFrame with columns: {list(df.columns)}
 {CHART_GUIDE}
+Respond **ONLY** with a Python script inside:
+# Your Python code here
+If a chart is required, use Plotly or Matplotlib.
+“””response = client.chat.completions.create(
+    messages=[
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": f"Generate Python code for: {query}. Only return the code inside triple backticks."}
+    ],
+    model=model,
+    temperature=0.2,
+    max_tokens=1500
+)
 
+return response.choices[0].message.content
+def display_results(env, output):
+“”“Handle multiple visualization types”””
+# Matplotlib figures
+figures = [plt.figure(i) for i in plt.get_fignums()]
+for fig in figures:
+st.pyplot(fig)
+plt.close(‘all’)
+# Plotly figures from environment
+for var in env:
+    if isinstance(env[var], (plt.Figure, px._figure.Figure)):
+        if 'plotly' in str(type(env[var])):
+            st.plotly_chart(env[var])
+        else:
+            st.pyplot(env[var])
 **Critical Rules**
 1. Use EXISTING 'df' - never load data
 2. Prefer Plotly Express (px) for advanced charts
@@ -206,3 +233,25 @@ def main():
 
 if __name__ == "__main__":
     main()
+    ### Key Changes:
+1. **`extract_code()` Function:** This method now handles both responses with triple backticks and responses that have direct code snippets without formatting.
+   
+2. **Updated `system_prompt`:** The prompt instructs the AI to return **only Python code** inside triple backticks.
+
+3. **Limit on `max_tokens`:** Reduced to `1500` to avoid overly long responses or truncation.
+
+4. **Security in Code Execution:** The `safe_execute_code()` method includes checks to prevent unsafe operations in the AI-generated code.
+
+### How it Works:
+1. **User Uploads a CSV File:** The user uploads a CSV file, which is processed into a `DataFrame`.
+2. **User Request for Visualization:** The user types a query asking the AI to generate a specific visualization.
+3. **Groq API Generates Python Code:** The system sends the request to the Groq API, and the AI responds with Python code for data analysis and visualization.
+4. **Execute and Display the Result:** The Python code is executed safely, and any resulting visualizations (Plotly or Matplotlib) are displayed in the Streamlit app.
+
+### Troubleshooting:
+- Ensure that the API key (`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`) is correct and valid.
+- If the output is empty or the AI response is not useful, try refining the query or checking data types and columns in the CSV file.
+
+This version should handle the "No valid code block found in response" issue while also improving safety and flexibility in executing AI-generated Python code.
+
+Let me know if you need further adjustments!
