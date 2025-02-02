@@ -5,9 +5,6 @@ import seaborn as sns
 import plotly.express as px
 from groq import Groq
 import re
-import sys
-from io import StringIO
-import contextlib
 
 # Initialize Groq client - replace with your API key
 client = Groq(api_key="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")
@@ -26,7 +23,6 @@ CHART_GUIDE = """## Chart Selection Guide
 5. Hierarchical: Treemap, Sunburst, Sankey
 6. Geospatial: Use coordinates for maps
 7. Proportions: Pie, Donut, Funnel
-
 Always:
 - Check data types first
 - Handle missing values
@@ -41,12 +37,10 @@ def extract_code(response_text):
     code_block = re.search(r'```(?:python)?(.*?)```', response_text, re.DOTALL)
     if code_block:
         return code_block.group(1).strip()
-
     # Try finding indented code blocks
     indented_code = re.search(r'(^|\n) +([^\n]+ *\n)+', response_text)
     if indented_code:
         return indented_code.group(0).strip()
-
     # Try finding code after specific markers
     markers = [
         r'Here(?: is| are) (?:the |a )?code(?: snippet)?:',
@@ -58,5 +52,43 @@ def extract_code(response_text):
         match = re.search(marker + r'\s*(.*)', response_text, re.DOTALL)
         if match:
             return match.group(1).strip()
-
     # Final fallback
+    return response_text.strip()
+
+# Streamlit App Layout
+st.title("Data Visualization Assistant")
+st.write("Upload your dataset and get interactive visualizations!")
+
+# File Upload
+uploaded_file = st.file_uploader("Upload a CSV file", type=["csv"])
+if uploaded_file is not None:
+    # Load the data
+    df = pd.read_csv(uploaded_file)
+    st.write("Preview of your data:")
+    st.dataframe(df.head())
+
+    # Chart Type Selection
+    chart_type = st.selectbox("Select a chart type", ["Line", "Bar", "Scatter", "Histogram", "Box"])
+
+    # Generate Chart
+    if st.button("Generate Chart"):
+        try:
+            if chart_type == "Line":
+                fig = px.line(df, title="Line Chart")
+            elif chart_type == "Bar":
+                fig = px.bar(df, title="Bar Chart")
+            elif chart_type == "Scatter":
+                fig = px.scatter(df, title="Scatter Plot")
+            elif chart_type == "Histogram":
+                fig = px.histogram(df, title="Histogram")
+            elif chart_type == "Box":
+                fig = px.box(df, title="Box Plot")
+
+            # Display the chart
+            st.plotly_chart(fig)
+        except Exception as e:
+            st.error(f"An error occurred: {str(e)}")
+
+# Display Chart Guide
+st.subheader("Need Help Selecting a Chart?")
+st.markdown(CHART_GUIDE)
