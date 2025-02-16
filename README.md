@@ -24,7 +24,7 @@ An intelligent data analysis tool that leverages AI models to automatically gene
 
 1. **Clone Repository**
 ```bash
-git clone https://github.com/<your-repo>/ai-data-visualization-agent.git
+git clone https://github.com/Avinashhmavi/Ai-data-visualisation-agent.git
 cd ai-data-visualization-agent
 ```
 
