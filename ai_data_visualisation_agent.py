@@ -83,7 +83,7 @@ def generate_analysis_code(df: pd.DataFrame, query: str, model: str):
     return response.choices[0].message.content
 
 def main():
-    st.title("📊 Safe Data Analyst")
+    st.title("📊 Data Analyst")
     
     # Model selection
     selected_model = st.selectbox("Choose Model", list(MODELS.keys()), index=0)
