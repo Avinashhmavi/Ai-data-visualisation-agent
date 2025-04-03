@@ -12,9 +12,8 @@ import contextlib
 client = Groq(api_key="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")
 
 MODELS = {
-    "Llama3-70B": "llama3-70b-8192",
-    "Mixtral-8x7B": "mixtral-8x7b-32768",
-    "Gemma-7B": "gemma-7b-it"
+    "Llama3-70B-Versatile": "llama-3.3-70b-versatile",
+    "Llama3-8B-Instant": "llama-3.1-8b-instant"
 }
 
 def safe_execute_code(code: str, df: pd.DataFrame):
